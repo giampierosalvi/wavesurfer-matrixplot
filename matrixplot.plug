@@ -420,13 +420,27 @@ proc matrixplot::processData {w pane data frameInterval header tag} {
     }
 }
 
+# this is for testing purposes
+proc matrixplot::generate_data {} {
+   set data [list]
+   for {set x 0} {$x < 50} {incr x} {
+      set row [list]
+      for {set y 0} {$y < 50} {incr y} {
+         lappend row [format "#%02x%02x%02x" [random_byte] [random_byte] [random_byte]]
+      }
+      lappend data $row
+   }
+   return $data
+}
+
 proc matrixplot::draw {w pane tag} {
     upvar [namespace current]::${pane}::var v
     
-    set c [$pane canvas]
-    
-    $c delete matrixplot
-    
+    set image [image create photo]
+    $image put [gnerate_data]
+    set c [$pane canvas  -image $image]
+    #$c delete matrixplot
+
     set v(plotlist) ""
     foreach {column color style} $v(styleList) {
 	#<< "column=$column, color=$color, style=$style"
