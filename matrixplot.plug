@@ -422,15 +422,31 @@ proc matrixplot::processData {w pane data frameInterval header tag} {
 
 # this is for testing purposes
 proc matrixplot::generate_data {} {
-   set data [list]
-   for {set x 0} {$x < 50} {incr x} {
-      set row [list]
-      for {set y 0} {$y < 50} {incr y} {
-         lappend row [format "#%02x%02x%02x" [random_byte] [random_byte] [random_byte]]
-      }
-      lappend data $row
-   }
-   return $data
+    set data [list]
+    for {set x 0} {$x < 50} {incr x} {
+	set row [list]
+	for {set y 0} {$y < 50} {incr y} {
+	    lappend row [format "#%02x%02x%02x" [random_byte] [random_byte] [random_byte]]
+	}
+	lappend data $row
+    }
+    return $data
+}
+
+proc matrixplot::scaleImage {im xfactor {yfactor 0}} {
+    set mode -subsample
+    if {abs($xfactor) < 1} {
+       set xfactor [expr round(1./$xfactor)]
+    } elseif {$xfactor>=0 && $yfactor>=0} {
+        set mode -zoom
+    }
+    if {$yfactor == 0} {set yfactor $xfactor}
+    set t [image create photo]
+    $t copy $im
+    $im blank
+    $im copy $t -shrink $mode $xfactor $yfactor
+    image delete $t
+    return $im
 }
 
 proc matrixplot::draw {w pane tag} {
@@ -438,7 +454,7 @@ proc matrixplot::draw {w pane tag} {
     
     set image [image create photo]
     $image put [gnerate_data]
-    set c [$pane canvas  -image $image]
+    set c [$pane canvas -image $image]
     #$c delete matrixplot
 
     set v(plotlist) ""
