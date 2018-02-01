@@ -54,6 +54,8 @@ namespace eval matrixplot {
 			       -framerate frameRate 100 \
 			       -timecolumn timeColumn 0 \
 			       -onlywarnmanualmods onlyWarnManualMods 1 \
+			       -dataarray dataarray {{1 2} {3 4}} \
+			       -pixelarray pixelarray {{"#010101" "#020202"} {"#030303" "#040404"}} \
 			      ]
     
     set Info(script) [info script]
@@ -348,6 +350,7 @@ proc matrixplot::openDataFile {w pane fn type} {
     set v(changed) 0
 }
 
+# data: list of rows
 proc matrixplot::processData {w pane data frameInterval header tag} {
     upvar [namespace current]::${pane}::var v
 
@@ -367,6 +370,7 @@ proc matrixplot::processData {w pane data frameInterval header tag} {
     if {[llength $data] == 1} {
 	lappend data [lindex $data 0]
     }
+    set v(dataarray) {}
     foreach line $data {
 	#<< "processing line $row"
 	if {$progressproc != "" && $row % 20 == 19} {
@@ -388,7 +392,8 @@ proc matrixplot::processData {w pane data frameInterval header tag} {
 		set t [lindex $elements $v(timeColumn)]
 	    }
 	}
-	
+
+	set datarow {}
 	foreach elem $elements {
 	    if {$elem != ""} {
 		#<< "processing element $elem"
@@ -399,13 +404,26 @@ proc matrixplot::processData {w pane data frameInterval header tag} {
 		    }
 		    return
 		}
-		util::setmin v(col#$col,min) $elem
-		util::setmax v(col#$col,max) $elem
-		lappend v(col#$col,points) $t $elem
+		util::setmin v(min) $elem
+		util::setmax v(max) $elem
+		lappend datarow $elem
 		incr col
 	    }
 	}
-	
+	lappend v(dataarray) $datarow
+	# transpose, invert y, rescale and transform into RGB values
+	set nrows [llength $v(dataarray)]
+	set ncols [llength [lindex $v(dataarray) 0]]
+	set v(pixelarray) {}
+	for {set colidx [expr $ncols-1]} {$colidx >= 0} {incr colidx -1} {
+	    set pixelrow {}
+	    for {set rowidx 0} {$rowidx < $nrows} {incr rowidx} {
+		set datavalue [lindex [lindex $v(dataarray) $rowidx] $colidx]
+		set intensity [expr round (256 * ($datavalue - $v(min))/($v(max)-$v(min)))]
+		lappend pixelrow [format "#%02x%02x%02x" $intensity $intensity $intensity]
+	    }
+	    lappend v(pixelarray) $pixelrow
+	}
 	#<< "maxtime $v(maxtime)"
 	set v(maxtime) [util::max $t $v(maxtime)]
 	incr row
@@ -625,6 +643,9 @@ proc matrixplot::draw {w pane tag} {
     upvar [namespace current]::${pane}::var v
 
     
+    set c [$pane canvas]
+ 
+    $c delete dataplot
     # set v(plotlist) ""
     # foreach {column color style} $v(styleList) {
     # 	#<< "column=$column, color=$color, style=$style"
@@ -918,7 +939,7 @@ proc matrixplot::_redraw {w pane c xo yo} {
     puts "redrawing"
 
     set src [image create photo]
-    $src put [generate_data]
+    $src put $v(pixelarray)
     set dest [image create photo]
     $dest blank
     set c [$pane canvas]
