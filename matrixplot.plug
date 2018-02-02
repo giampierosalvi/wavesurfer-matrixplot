@@ -380,7 +380,6 @@ proc matrixplot::processData {w pane data frameInterval header tag} {
 	}
 
 	set elements [split [string trim $line] "\t ,"]
-	set col 0
 	switch $v(dataSpacingMode) {
 	    fixedtime {
 		set t [expr {$row*$v(frameInterval)}]
@@ -407,27 +406,26 @@ proc matrixplot::processData {w pane data frameInterval header tag} {
 		util::setmin v(min) $elem
 		util::setmax v(max) $elem
 		lappend datarow $elem
-		incr col
 	    }
 	}
 	lappend v(dataarray) $datarow
-	# transpose, invert y, rescale and transform into RGB values
-	set nrows [llength $v(dataarray)]
-	set ncols [llength [lindex $v(dataarray) 0]]
-	set v(pixelarray) {}
-	for {set colidx [expr $ncols-1]} {$colidx >= 0} {incr colidx -1} {
-	    set pixelrow {}
-	    for {set rowidx 0} {$rowidx < $nrows} {incr rowidx} {
-		set datavalue [lindex [lindex $v(dataarray) $rowidx] $colidx]
-		set intensity [expr round (256 * ($datavalue - $v(min))/($v(max)-$v(min)))]
-		lappend pixelrow [format "#%02x%02x%02x" $intensity $intensity $intensity]
-	    }
-	    lappend v(pixelarray) $pixelrow
-	}
 	#<< "maxtime $v(maxtime)"
 	set v(maxtime) [util::max $t $v(maxtime)]
 	incr row
 	incr v(linesRead)
+    }
+    # transpose, invert y, rescale and transform into RGB values
+    set nrows [llength $v(dataarray)]
+    set ncols [llength [lindex $v(dataarray) 0]]
+    set v(pixelarray) {}
+    for {set colidx [expr $ncols-1]} {$colidx >= 0} {incr colidx -1} {
+	set pixelrow {}
+	for {set rowidx 0} {$rowidx < $nrows} {incr rowidx} {
+	    set datavalue [lindex [lindex $v(dataarray) $rowidx] $colidx]
+	    set intensity [expr round (256 * ($datavalue - $v(min))/($v(max)-$v(min)))]
+	    lappend pixelrow [format "#%02x%02x%02x" $intensity $intensity $intensity]
+	}
+	lappend v(pixelarray) $pixelrow
     }
     draw $w $pane $tag
     if {$progressproc != ""} {
@@ -945,9 +943,15 @@ proc matrixplot::_redraw {w pane c xo yo} {
     set c [$pane canvas]
     $c delete matrixplot
     $c create image 0 0 -anchor nw -image $dest
-    set canvas_width [$c cget -width]
-    set canvas_height [$c cget -height]
-    resizeImage $src $canvas_width $canvas_height $dest
+    
+    #set x0 [$pane getCanvasX 0]
+    set xmax [$pane getCanvasX $v(maxtime)]
+    puts "maxtime=$v(maxtime) xmax=$xmax"
+    set y0 [$pane getCanvasY 0]
+    set y1 [$pane getCanvasY 1]
+    set ys [expr {$y1-$y0}]
+    if {$ys==0.0} {set ys 1.0}
+    resizeImage $src [expr round($xmax)] 200 $dest
     
     foreach g $v(plotlist) {
 	set n [lindex [split $g #] 1]
