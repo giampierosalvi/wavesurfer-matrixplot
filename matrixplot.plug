@@ -943,15 +943,16 @@ proc matrixplot::_redraw {w pane c xo yo} {
     set c [$pane canvas]
     $c delete matrixplot
     $c create image 0 0 -anchor nw -image $dest
-    
-    #set x0 [$pane getCanvasX 0]
-    set xmax [$pane getCanvasX $v(maxtime)]
-    puts "maxtime=$v(maxtime) xmax=$xmax"
-    set y0 [$pane getCanvasY 0]
-    set y1 [$pane getCanvasY 1]
-    set ys [expr {$y1-$y0}]
-    if {$ys==0.0} {set ys 1.0}
-    resizeImage $src [expr round($xmax)] 200 $dest
+
+    if {$v(maxtime) != 0.0} {
+	#set x0 [$pane getCanvasX 0]
+	set xmax [$pane getCanvasX $v(maxtime)]
+	set y0 [$pane getCanvasY 0]
+	set y1 [$pane getCanvasY 1]
+	set ys [expr {$y1-$y0}]
+	if {$ys==0.0} {set ys 1.0}
+	resizeImage $src [expr round($xmax)] 200 $dest
+    }
     
     foreach g $v(plotlist) {
 	set n [lindex [split $g #] 1]
