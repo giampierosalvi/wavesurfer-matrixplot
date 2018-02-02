@@ -11,3 +11,10 @@ This plugin adds the possibility to display data in matrix form. The main use is
 ## Installation
 * start wavesurfer in order to create the preferences directory
 * copy the `matrixplot.plug` file into the plugins directory (in linux systems this is located at `~/.wavesurfer/1.8/plugins/`).
+
+## Test
+1) run
+```
+wavesurfer example.wav
+```
+2) create matrixplot pane (this should load automatically the data in `example.txt`)
