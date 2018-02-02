@@ -1,6 +1,6 @@
 # -*-Mode:Tcl-*-
 #
-#  Copyright (c) 2018 Giampiero Salvi
+#  Copyright (c) 2018 Giampiero Salvi <giampi@kth.se>
 #
 
 wsurf::RegisterPlugin matrixplot \
